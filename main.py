@@ -4,74 +4,6 @@
 import tkinter
 
 
-class Point3():
-    # for future (can add new coordinate)
-    dict_coord = {'x': 0, 'y': 1, 'z': 2}
-
-    def __init__(self, coords3):
-        self.coords3 = coords3[:len(self.dict_coord)]
-
-    # x = p['x']
-    def __getitem__(self, index):
-        return self.coords3[self.dict_coord[index]]
-
-    # p['x'] = x
-    def __setitem__(self, index, value):
-        self.coords3[self.dict_coord[index]] = value
-
-
-class Line3():
-    # for future (can add new coordinate)
-    dict_coord = {'x': 0, 'y': 1, 'z': 2}
-
-    def __init__(self, *args, **kwargs):
-        if kwargs.get('arr_points3', None) is None:
-            self.points3 = kwargs.get('arr_points3')[:2]
-        elif(kwargs.get('xy0', None) is None and
-             kwargs.get('xy1', None) is None):
-            self.points3 = [Point3(xy) for xy in
-                            [kwargs.get('xy0'), kwargs.get('xy1')]]
-        else:
-            print("Error! Bad argument:{} {}".format(args, kwargs))
-
-    # x0 = l['x0']
-    def __getitem__(self, index):
-        return self.points3[int(index[1])][self.dict_coord[index[0]]]
-
-    # l['x0'] = x0
-    def __setitem__(self, index, value):
-        self.points3[int(index[1])][self.dict_coord[index[0]]] = value
-
-
-class Poly3():
-    # for future (can add new coordinate)
-    dict_coord = {'x': 0, 'y': 1, 'z': 2}
-
-    def __init__(self, *args, **kwargs):
-        if kwargs.get('arr_points3', None) is None:
-            arr_points3 = kwargs.get('arr_points3', None)
-            self.lines3 = [Line3(arr_points3[i - 1], arr_points3[i]) for i
-                           in range(1, len(arr_points3))]
-        elif kwargs.get('arr_xy', None) is None:
-            arr_xy = kwargs.get('arr_xy', None)
-            self.lines3 = [Line3(arr_xy[i - 1], arr_xy[i]) for i
-                           in range(1, len(arr_xy))]
-        else:
-            print("Error! Bad argument:{} {}".format(args, kwargs))
-
-
-"""
-class Geom3():
-    figures3 = []
-    points3 = []
-
-    def __init__(self):
-        pass
-
-    def create_line3(self, points):
-"""
-
-
 class Geom_Canvas():
     figures = []
 
@@ -149,8 +81,9 @@ class App():
 
         geom_canv = self.geometry_canvas = Geom_Canvas(canv)
 
-        a = geom_canv.create([100, 150, 400, 600], {'tag': 'line', 'fill': '#ffffff', 'activefill': '#00ff00',
-                             'width': 20})
+        a = geom_canv.create([100, 150, 400, 600],
+                             {'tag': 'line', 'fill': '#ffffff',
+                              'activefill': '#00ff00', 'width': 20})
         geom_canv.canv.itemconfig(a, {'fill': '#ff0000'})
 
         canv.pack(expand=1, fill=tkinter.BOTH)
