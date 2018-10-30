@@ -7,9 +7,11 @@ import types
 
 '''
 Shape3
-    Point3  self.coords3
-    Line3   self.points3
-    Poly3   self.lines3
+    Point3  self.coords3    self.points3
+    Line3                   self.points3
+    Poly3   self.lines3     self.points3
+    Geom3   self.figures3   self.points3
+        Proj3   self.Point3
 
 TODO
 Shape3
@@ -30,6 +32,7 @@ class Shape3():
 class Point3(Shape3):
     name = 'point'
 
+    # Point3([x,y,z])
     def __init__(self, coords3):
         if len(coords3) >= len(self.dict_coord):
             self.coords3 = coords3[:len(self.dict_coord)]
@@ -37,9 +40,11 @@ class Point3(Shape3):
             self.error_args_message.format(
                 args=coords3, kwargs='', nam=self.name)
 
+        self.points3 = [self]
+
     def __str__(self):
         return "{}({})".format(
-            self.name, str(reduce(lambda x, y: '{},{}'.format(x, y),
+            self.name, str(reduce(lambda x, y: '{}, {}'.format(x, y),
                                   self.coords3)))
 
     # x = p['x']
@@ -61,14 +66,14 @@ class Line3(Shape3):
         if not kwargs.get('arr_points3', None) is None:
             self.points3 = kwargs.get('arr_points3')
 
-        # Line3(xy0=[x0,y0],xy1=[x1,y1])
+        # Line3(xy0=[x0,y0,z0],xy1=[x1,y1,z1])
         elif not(kwargs.get('xy0', None) is None and
                  kwargs.get('xy1', None) is None):
             self.points3 = [Point3(xy) for xy in
                             [kwargs.get('xy0'), kwargs.get('xy1')]]
 
         # Line3(p1,p2)
-        # Line3([x0,y0],[x1,y1])
+        # Line3([x0,y0,z0],[x1,y1,z1])
         elif len(args) == 2:
             if isinstance(args[0], Point3) and isinstance(args[1], Point3):
                 self.points3 = args
@@ -134,9 +139,13 @@ class Poly3(Shape3):
             print(self.error_args_message.format(
                 args=args, kwargs=kwargs, nam=self.name))
 
+        self.points3 = [line.points3[0] for line in
+                        self.lines3] + [line.points3[1] for line in
+                                        [self.lines3[-1]]]
+
     # ??? iter points or iter lines ???
     def __iter__(self):
-        return iter(self.lines3)
+        return iter(self.points3)
 
     # add tab after each newline
     def __str__(self):
@@ -155,20 +164,94 @@ class Poly3(Shape3):
     # TODO: __getitem__ __setitem__
 
 
-"""
-# TODO
 class Geom3(Shape3):
+    name = 'geom'
+    arr_types = [Point3, Line3, Poly3]
+
     figures3 = []
     points3 = []
 
     def __init__(self):
         pass
 
-    def create_line3(self, points):
-"""
+    def add(self, obj):
+        for tp in self.arr_types:
+            if isinstance(obj, tp):
+                self.figures3.append(obj)
+                for p in obj.points3:
+                    if filter(lambda x: p is x, self.points3) == []:
+                        self.points3.append(p)
 
-# TODO  Projection with matrix!
-#       Rotation with matrix
+    def __str__(self):
+        def st(y):
+            return reduce(lambda x, y: '{}\n{}'.format(x, y), y)
+
+        def tab(n, s):
+            return s.replace('\n', '\n' + ' ' * (len(n) + 1))
+
+        arr_str = ['figures', 'points']
+        return tab(self.name, '{}(\n{}:{}\n{}:{}\n)'.format(
+            self.name, arr_str[0], tab(arr_str[0], '\n' + st(self.figures3)),
+            arr_str[1], tab(arr_str[1], '\n' + st(self.points3))))
+
+    def copy(self, geom_source3, is_append=False):
+        def num_in_points_arr(point):
+            for i in range(len(geom_source3.points3)):
+                if point is geom_source3.points3[i]:
+                    return i
+        if not is_append:
+            self.figures3 = []
+            self.points3 = []
+        n_points = len(self.points3)
+        for p in geom_source3.points3:
+            self.points3.append(Point3(p.coords3[:]))
+        for f in geom_source3.figures3:
+            for tp in self.arr_types:
+                if isinstance(f, tp):
+                    if tp == Point3:
+                        self.figures3.append(
+                            self.points3[num_in_points_arr(f) + n_points])
+                    else:
+                        self.figures3.append(tp(
+                            arr_points3=[
+                                self.points3[n_points +
+                                             num_in_points_arr(p)] for
+                                p in f.points3]))
+
+    # Rotate points in plane by normal_vec1 & normal_vec2 by angle
+    def rotate(self, nv1, nv2, ang):
+        from math import sin, cos
+        rot2 = [[cos, lambda x: -sin(x)], [sin, cos]]
+
+        l_mat_rot = [[(lambda x: 0, lambda x: 1)[i == j]
+                      for j in range(len(self.dict_coord))]
+                     for i in range(len(self.dict_coord))]
+
+        for i in zip([nv1, nv2], [0, 1]):
+            for j in zip([nv1, nv2], [0, 1]):
+                l_mat_rot[i[0]][j[0]] = rot2[i[1]][j[1]]
+
+        mat_rot = [[lam(ang) for lam in st] for st in l_mat_rot]
+
+        print(mat_rot)
+        # TODO Rotate all points
+
+
+class Proj2(Geom3):
+    name = 'proj'
+
+    def __init__(self, vec_point3, geom_source3):
+        self.geom2 = Geom3()
+        self.geom2.dict_coord = {'x': 0, 'y': 1}
+
+        self.geom_source3 = Geom3()
+        self.geom_source3.copy(geom_source3)
+        # TODO rotate
+
+
+# TODO  Projection with matrix! -> by rotation
+#       Rotation with matrix (+ around any point)
+
 
 if __name__ == '__main__':
     p1 = Point3([1, 2, 3])
@@ -177,9 +260,17 @@ if __name__ == '__main__':
     """
     l1 = Line3(arr_points3=[p1, p2])
     l2 = Line3(arr_points3=[p2, p3])
-    l3 = Line3(xy0=[8, 7, 6], xy1=[5, 4, 3])
     poly1 = Poly3(arr_points3=[p1, p2, p3])
     """
-    p1['x'] = 50
-    poly2 = Poly3(p1, p2)
-    print(poly2)
+    l3 = Line3(xy0=[1, 2, 3], xy1=[5, 4, 3])
+    p1['x'] = 1
+    poly2 = Poly3(p1, p2, p3)
+    # print(poly2)
+
+    g = Geom3()
+    g.add(poly2)
+    g.add(p1)
+    g.add(l3)
+    g2 = Geom3()
+    g2.copy(g)
+    g.rotate(0, 1, 3.1415926/2)
