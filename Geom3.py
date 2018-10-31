@@ -174,17 +174,14 @@ class Geom3(Shape3):
     def __init__(self):
         pass
 
-    def add(self, obj):
-        for tp in self.arr_types:
-            if isinstance(obj, tp):
-                self.figures3.append(obj)
-                for p in obj.points3:
-                    if filter(lambda x: p is x, self.points3) == []:
-                        self.points3.append(p)
-
     def __str__(self):
         def st(y):
-            return reduce(lambda x, y: '{}\n{}'.format(x, y), y)
+            if len(y) == 0:
+                return ''
+            elif len(y) == 1:
+                return str(y[0])
+            else:
+                return reduce(lambda a, b: '{}\n{}'.format(a, b), y)
 
         def tab(n, s):
             return s.replace('\n', '\n' + ' ' * (len(n) + 1))
@@ -193,6 +190,21 @@ class Geom3(Shape3):
         return tab(self.name, '{}(\n{}:{}\n{}:{}\n)'.format(
             self.name, arr_str[0], tab(arr_str[0], '\n' + st(self.figures3)),
             arr_str[1], tab(arr_str[1], '\n' + st(self.points3))))
+
+    def add(self, obj):
+        for tp in self.arr_types:
+            if isinstance(obj, tp):
+                self.figures3.append(obj)
+                for p in obj.points3:
+                    if filter(lambda x: p is x, self.points3) == []:
+                        self.points3.append(p)
+
+    def delete(self, obj):
+        for tp in self.arr_types:
+            if isinstance(obj, tp):
+                if obj in self.figures3:
+                    # TODO Delete points also!
+                    self.figures3.remove(obj)
 
     def copy(self, geom_source3, is_append=False):
         def num_in_points_arr(point):
@@ -233,19 +245,76 @@ class Geom3(Shape3):
 
         mat_rot = [[lam(ang) for lam in st] for st in l_mat_rot]
 
-        print(mat_rot)
-        # TODO Rotate all points
+        def matmult(a, b, func=lambda x, y: x * y):
+            zip_b = zip(*b)
+            # uncomment next line if python 3 :
+            # zip_b = list(zip_b)
+            return [[sum(func(ele_a, ele_b) for ele_a, ele_b in
+                         zip(row_a, col_b))
+                     for col_b in zip_b] for row_a in a]
+
+        for p in self.points3:
+            p.coords3 = matmult([p.coords3], mat_rot)
 
 
 class Proj2(Geom3):
     name = 'proj'
 
-    def __init__(self, vec_point3, geom_source3):
+    def __init__(self, vec_point3, vec_rot_point3, geom_source3):
         self.geom2 = Geom3()
         self.geom2.dict_coord = {'x': 0, 'y': 1}
 
         self.geom_source3 = Geom3()
         self.geom_source3.copy(geom_source3)
+
+        from math import sqrt
+
+        # Normalise
+        vec_point3_c = [vec_point3.coords3[:], vec_rot_point3.coords3[:]]
+        r_vec_point3 = [sqrt(sum([i * i for i in v])) for v in vec_point3_c]
+        vec_point3_c = [[i / r_vec_point3[j]
+                         for i in vec_point3_c[j]] for j in [0, 1]]
+
+        # TODO check vec* are orts (ang = pi/2)
+
+        self.vec_point3 = Point3(vec_point3_c[0])
+        self.vec_rot_point3 = Point3(vec_point3_c[1])
+
+        self.geom_source3.add(self.vec_point3)
+        self.geom_source3.add(self.vec_rot_point3)
+
+        """
+        |y
+        |
+        .z_____x
+
+        vec_point3 =        [0,0,1]
+        vec_rot_point3 =    [1,0,0]
+
+        """
+
+        # Rotation: vec_rot_point['z'] -> 0
+        Xxz = self.vec_rot_point3['x']
+        Zxz = self.vec_rot_point3['z']
+        from cmath import phase
+        a1 = phase(complex(Xxz, -Zxz))
+        self.geom_source3.rotate(0, 2, -a1)
+
+        # Rotation: vec_rot_point['y'] -> 0
+        Xxy = self.vec_rot_point3['x']
+        Yxy = self.vec_rot_point3['y']
+        a2 = phase(complex(Xxy, Yxy))
+        self.geom_source3.rotate(0, 1, -a2)
+
+        # Rotation: vec_point['y'] -> 0
+        Yyz = self.vec_point3['y']
+        Zyz = self.vec_point3['z']
+        a3 = phase(complex(Zyz, Yyz))
+        self.geom_source3.rotate(1, 2, -a3)
+        # /Rotations
+
+        self.geom_source3.delete(self.vec_point3)
+        self.geom_source3.delete(self.vec_rot_point3)
         # TODO rotate
 
 
@@ -273,4 +342,10 @@ if __name__ == '__main__':
     g.add(l3)
     g2 = Geom3()
     g2.copy(g)
-    g.rotate(0, 1, 3.1415926/2)
+    print(g)
+    import math
+    g.rotate(0, 1, math.pi)
+    print(g)
+    pz = Point3([0, 0, 1])
+    px = Point3([1, 0, 0])
+    prj = Proj2(pz, px, g)
