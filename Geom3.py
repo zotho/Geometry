@@ -5,13 +5,18 @@
 from functools import reduce
 import types
 
+__author__ = "Sviatoslav Alexeev"
+__email__ = "svjatoslavalekseef2@gmail.com"
+__status__ = "Developed"
+
+
 '''
 Shape3
     Point3  self.coords3    self.points3
     Line3                   self.points3
     Poly3   self.lines3     self.points3
     Geom3   self.figures3   self.points3
-        Proj3   self.Point3
+        Proj3   self.Point3 self.Point3
 
 TODO
 Shape3
@@ -33,22 +38,29 @@ class Point3(Shape3):
     name = 'point'
 
     # Point3([x,y,z])
-    def __init__(self, coords3):
+    def __init__(self, coords3, dict_coord=None):
+        if dict_coord is not None:
+            self.dict_coord = dict_coord
         if len(coords3) >= len(self.dict_coord):
             self.coords3 = coords3[:len(self.dict_coord)]
         else:
+            """
             self.error_args_message.format(
                 args=coords3, kwargs='', nam=self.name)
+            """
+            self.coords3 = coords3[:]
 
         self.points3 = [self]
 
     def __str__(self):
+        # print(self.coords3)
         return "{}({})".format(
             self.name, str(reduce(lambda x, y: '{}, {}'.format(x, y),
                                   self.coords3)))
 
     # x = p['x']
     def __getitem__(self, index):
+        # print(self.coords3)
         return self.coords3[self.dict_coord[index]]
 
     # p['x'] = x
@@ -154,12 +166,14 @@ class Poly3(Shape3):
         st = st.replace('\n', '\n' + ' ' * (len(self.name) + 1))
         st = "{}({})".format(self.name, st)
         return st
+        """
         return "{}({})".format(
             self.name,
             str(reduce(lambda x, y: '{},\n{}'.format(
                        str(x), str(y)),
                        self.lines3).replace(
                 '\n', '\n' + ' ' * (len(self.name) + 1))))
+        """
 
     # TODO: __getitem__ __setitem__
 
@@ -172,10 +186,12 @@ class Geom3(Shape3):
     points3 = []
 
     def __init__(self):
-        pass
+        self.figures3 = []
+        self.points3 = []
 
     def __str__(self):
         def st(y):
+            # print(y[0])
             if len(y) == 0:
                 return ''
             elif len(y) == 1:
@@ -204,7 +220,17 @@ class Geom3(Shape3):
             if isinstance(obj, tp):
                 if obj in self.figures3:
                     # TODO Delete points also!
+                    all_points = []
+                    for f in self.figures3:
+                        all_points = all_points + f.points3
+                    rem_points = []
+                    for p in self.figures3[self.figures3.index(obj)].points3:
+                        if all_points.count(p) == 1:
+                            rem_points.append(p)
                     self.figures3.remove(obj)
+                    for p in rem_points:
+                        self.points3.remove(p)
+                    break
 
     def copy(self, geom_source3, is_append=False):
         def num_in_points_arr(point):
@@ -216,7 +242,8 @@ class Geom3(Shape3):
             self.points3 = []
         n_points = len(self.points3)
         for p in geom_source3.points3:
-            self.points3.append(Point3(p.coords3[:]))
+
+            self.points3.append(Point3(p.coords3[:len(self.dict_coord)]))
         for f in geom_source3.figures3:
             for tp in self.arr_types:
                 if isinstance(f, tp):
@@ -254,15 +281,32 @@ class Geom3(Shape3):
                      for col_b in zip_b] for row_a in a]
 
         for p in self.points3:
-            p.coords3 = matmult([p.coords3], mat_rot)
+            p.coords3 = matmult([p.coords3], mat_rot)[0]
 
 
 class Proj2(Geom3):
     name = 'proj'
 
+    # projection geom_source3 to plane dy vec_point3
+    # and by vec_rot_point3 align
     def __init__(self, vec_point3, vec_rot_point3, geom_source3):
         self.geom2 = Geom3()
         self.geom2.dict_coord = {'x': 0, 'y': 1}
+
+        self.update(vec_point3, vec_rot_point3, geom_source3)
+
+    def update(self, vec_point3=None, vec_rot_point3=None, geom_source3=None):
+        # Save or replace sorces
+        if vec_point3 is not None:
+            self.init_vec_point3 = vec_point3
+        if vec_rot_point3 is not None:
+            self.init_vec_rot_point3 = vec_rot_point3
+        if geom_source3 is not None:
+            self.init_geom_source3 = geom_source3
+
+        vec_point3 = self.init_vec_point3
+        vec_rot_point3 = self.init_vec_rot_point3
+        geom_source3 = self.init_geom_source3
 
         self.geom_source3 = Geom3()
         self.geom_source3.copy(geom_source3)
@@ -279,6 +323,9 @@ class Proj2(Geom3):
 
         self.vec_point3 = Point3(vec_point3_c[0])
         self.vec_rot_point3 = Point3(vec_point3_c[1])
+
+        # print(self.vec_point3)
+        # print(self.vec_rot_point3)
 
         self.geom_source3.add(self.vec_point3)
         self.geom_source3.add(self.vec_rot_point3)
@@ -315,7 +362,11 @@ class Proj2(Geom3):
 
         self.geom_source3.delete(self.vec_point3)
         self.geom_source3.delete(self.vec_rot_point3)
-        # TODO rotate
+
+        self.points3 = self.geom_source3.points3
+        self.figures3 = self.geom_source3.figures3
+
+        self.geom2.copy(self.geom_source3)
 
 
 # TODO  Projection with matrix! -> by rotation
@@ -331,21 +382,30 @@ if __name__ == '__main__':
     l2 = Line3(arr_points3=[p2, p3])
     poly1 = Poly3(arr_points3=[p1, p2, p3])
     """
+    """
     l3 = Line3(xy0=[1, 2, 3], xy1=[5, 4, 3])
     p1['x'] = 1
     poly2 = Poly3(p1, p2, p3)
     # print(poly2)
-
+    """
     g = Geom3()
-    g.add(poly2)
+    # g.add(poly2)
     g.add(p1)
-    g.add(l3)
-    g2 = Geom3()
-    g2.copy(g)
+    # g.add(l3)
+    # g2 = Geom3()
+    # g2.copy(g)
+    # print(g)
+    # import math
+    # g.rotate(0, 1, math.pi)
     print(g)
-    import math
-    g.rotate(0, 1, math.pi)
-    print(g)
-    pz = Point3([0, 0, 1])
     px = Point3([1, 0, 0])
-    prj = Proj2(pz, px, g)
+    py = Point3([0, 1, 0])
+    pz = Point3([0, 0, 1])
+    prj = Proj2(pz, py, g)
+    print(prj)
+    prj.update(vec_rot_point3=px)
+    print(prj)
+    print(prj.geom2)
+    g2 = Geom3()
+    g2.add(p1)
+    print(g2)
