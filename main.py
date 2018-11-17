@@ -4,6 +4,14 @@
 import Tkinter as tkinter
 from Geom3 import *
 
+__author__ = "Sviatoslav Alexeev"
+__email__ = "svjatoslavalekseef2@gmail.com"
+__status__ = "Developed"
+'''
+    For more information see:
+    www.github.com/zotho
+'''
+
 
 class Geom_Canvas():
     figures = []
