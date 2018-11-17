@@ -8,7 +8,10 @@ import types
 __author__ = "Sviatoslav Alexeev"
 __email__ = "svjatoslavalekseef2@gmail.com"
 __status__ = "Developed"
-
+'''
+    For more information see:
+    www.github.com/zotho
+'''
 
 '''
 Shape3
@@ -55,8 +58,8 @@ class Point3(Shape3):
     def __str__(self):
         # print(self.coords3)
         return "{}({})".format(
-            self.name, str(reduce(lambda x, y: '{}, {}'.format(x, y),
-                                  self.coords3)))
+            self.name, reduce(lambda x, y: '{}, {}'.format(x, y),
+                              ['{:7.3f}'.format(i) for i in self.coords3]))
 
     # x = p['x']
     def __getitem__(self, index):
