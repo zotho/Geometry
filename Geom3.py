@@ -260,7 +260,7 @@ class Geom3(Shape3):
                                              num_in_points_arr(p)] for
                                 p in f.points3]))
 
-    # Rotate points in plane by normal_vec1 & normal_vec2 by angle
+    # Rotate points in plane by normal_vec1 & normal_vec2 by angle clockwise
     def rotate(self, nv1, nv2, ang):
         from math import sin, cos
         rot2 = [[cos, lambda x: -sin(x)], [sin, cos]]
@@ -343,12 +343,13 @@ class Proj2(Geom3):
 
         """
 
+        from cmath import phase
+        
         # Rotation: vec_rot_point['z'] -> 0
         Xxz = self.vec_rot_point3['x']
         Zxz = self.vec_rot_point3['z']
-        from cmath import phase
-        a1 = phase(complex(Xxz, -Zxz))
-        self.geom_source3.rotate(0, 2, -a1)
+        a1 = phase(complex(Xxz, Zxz))
+        self.geom_source3.rotate(2, 0, -a1)
 
         # Rotation: vec_rot_point['y'] -> 0
         Xxy = self.vec_rot_point3['x']
@@ -377,38 +378,43 @@ class Proj2(Geom3):
 
 
 if __name__ == '__main__':
+    import math
+
     p1 = Point3([1, 2, 3])
     p2 = Point3([4, 5, 6])
     p3 = Point3([5, 6, 7])
-    """
+    '''
     l1 = Line3(arr_points3=[p1, p2])
     l2 = Line3(arr_points3=[p2, p3])
     poly1 = Poly3(arr_points3=[p1, p2, p3])
-    """
-    """
     l3 = Line3(xy0=[1, 2, 3], xy1=[5, 4, 3])
     p1['x'] = 1
     poly2 = Poly3(p1, p2, p3)
-    # print(poly2)
-    """
+    print(poly2)
+    '''
     g = Geom3()
     # g.add(poly2)
     g.add(p1)
-    # g.add(l3)
-    # g2 = Geom3()
-    # g2.copy(g)
-    # print(g)
-    # import math
-    # g.rotate(0, 1, math.pi)
+    '''
+    g.add(l3)
+    g2 = Geom3()
+    g2.copy(g)
+    print(g)
+    import math
+    print(g)
+    g.rotate(0, 1, math.pi/2) # rotate clockwise
+    '''
     print(g)
     px = Point3([1, 0, 0])
     py = Point3([0, 1, 0])
     pz = Point3([0, 0, 1])
-    prj = Proj2(pz, py, g)
+    prj = Proj2(pz, px, g)
     print(prj)
+    '''
     prj.update(vec_rot_point3=px)
     print(prj)
     print(prj.geom2)
     g2 = Geom3()
     g2.add(p1)
     print(g2)
+    '''
