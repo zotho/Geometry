@@ -260,7 +260,7 @@ class Geom3(Shape3):
                                              num_in_points_arr(p)] for
                                 p in f.points3]))
 
-    def _matmult(self, m1, m2, func=lambda x, y: x * y):
+    def _matMult(self, m1, m2, func=lambda x, y: x * y):
             '''
             print 'a = '+str(m1)
             print 'b = '+str(m2)
@@ -293,7 +293,7 @@ class Geom3(Shape3):
             print 'b ='+str(mat_rot)
             '''
             # print self.matmult([p.coords3], mat_rot)
-            p.coords3 = self._matmult([p.coords3], mat_rot)[0]
+            p.coords3 = self._matMult([p.coords3], mat_rot)[0]
 
 
 class Proj2(Geom3):
@@ -307,6 +307,18 @@ class Proj2(Geom3):
 
         self.update(vec_point3, vec_rot_point3, geom_source3)
 
+    def _vecScal(self, v1, v2):
+        return sum([v1[i]*v2[i] for i in range(len(v1))])
+
+    def _vecMult(self, v1, v2):
+        vm = [v1[1]*v2[2]-v1[2]*v2[1], 
+              v1[2]*v2[0]-v1[0]*v2[2], 
+              v1[0]*v2[1]-v1[1]*v2[0]]
+        # Test
+        print "{} is {}".format(self._vecScal(v1,vm), self._vecScal(v1,vm) < 0.00000001)
+        print "{} is {}".format(self._vecScal(v2,vm), self._vecScal(v2,vm) < 0.00000001)
+        return vm
+   
     def update(self, vec_point3=None, vec_rot_point3=None, geom_source3=None):
         # Save or replace sorces
         if vec_point3 is not None:
@@ -353,7 +365,7 @@ class Proj2(Geom3):
         """
 
         from cmath import phase
-        
+        '''
         # Rotation: vec_rot_point['z'] -> 0
         Xxz = self.vec_rot_point3['x']
         Zxz = self.vec_rot_point3['z']
@@ -372,6 +384,17 @@ class Proj2(Geom3):
         a3 = phase(complex(Zyz, Yyz))
         self.geom_source3.rotate(1, 2, -a3)
         # /Rotations
+        '''
+
+        vec_n = self._vecMult([0,0,1], self.vec_point3.coords3[:])
+        angle_alfa = phase(complex(vec_n[0], vec_n[1]))
+        self.geom_source3.rotate(0, 1, angle_alfa)
+
+        angle_betha = phase(complex(self.vec_point3['z'], -self.vec_point3['y']))
+        self.geom_source3.rotate(1, 2, angle_betha)
+
+        angle_gama = phase(complex(self.vec_rot_point3['x'], self.vec_rot_point3['y']))
+        self.geom_source3.rotate(0, 1, angle_gama)
 
         self.geom_source3.delete(self.vec_point3)
         self.geom_source3.delete(self.vec_rot_point3)
