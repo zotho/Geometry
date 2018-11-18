@@ -2,6 +2,7 @@
 # -*- coding: utf-8
 
 import Tkinter as tkinter
+from json import dump, load
 from Geom3 import *
 
 __author__ = "Sviatoslav Alexeev"
@@ -11,6 +12,8 @@ __status__ = "Developed"
     For more information see:
     www.github.com/zotho
 '''
+
+model_filename = 'data.json'
 
 
 class Geom_Canvas():
@@ -121,12 +124,50 @@ class App():
             f_buttons, {'width': 5, 'height': 1, 'bg': 'red', 'text': '2'})
         lab2.pack(anchor=tkinter.NE, side=tkinter.TOP)
 
+        # Canvas
         canv = self.canvas = tkinter.Canvas(
             f_canvas, {'bg': 'white'})
 
-        # Canvas
         self.geom_canv = self.geometry_canvas = Geom_Canvas(canv)
 
+        '''
+        data = {'points':[[],
+                          ],
+                'lines':[{'coords':[0,1],
+                          'options':{}},
+                         ]}
+
+        data = {'points':[[100, -150, 0], 
+                          [40, -60, 0], 
+                          [200, 100, 100]],
+                'lines':[{'coords':[0,1],
+                          'options':{'tag': 'line', 'fill': '#ff0000',
+                                     'activefill': '#00ff00', 'width': 5}},
+                         {'coords':[1,2],
+                          'options':{'tag': 'line', 'fill': '#ff0000',
+                                     'activefill': '#00ff00', 'width': 5}},
+                         {'coords':[2,0],
+                          'options':{'tag': 'line', 'fill': '#ff0000',
+                                     'activefill': '#00ff00', 'width': 5}}
+                         ]}
+
+        # write
+        with open(model_filename, 'w') as out_file:
+            dump(data, out_file)
+        '''
+
+        # read
+        with open(model_filename) as in_file:
+            data = load(in_file)
+
+        lines = []
+        for line in data['lines']:
+            lines.append( self.geom_canv.create(
+                [data['points'][line['coords'][0]],
+                 data['points'][line['coords'][1]]],
+                line['options']) )
+
+        '''
         a = self.geom_canv.create([[100, -150, 0], [40, -60, 0]],
                              {'tag': 'line', 'fill': '#ff0000',
                               'activefill': '#00ff00', 'width': 5})
@@ -136,17 +177,23 @@ class App():
         c = self.geom_canv.create ([[200, 100, 100], [100, -150, 0]],
                               {'tag': 'line', 'fill': '#ff0000',
                                'activefill': '#00ff00', 'width': 5})
-        #geom_canv.canv.itemconfig(a, {'fill': '#ff0000'})
-        root.bind ('w',  lambda event: self.geom_canv.rotate('w'))
-        root.bind ('e', lambda event: self.geom_canv.rotate ('e'))
-        root.bind ('r', lambda event: self.geom_canv.rotate ('r'))
-
+        '''
+        # geom_canv.canv.itemconfig(a, {'fill': '#ff0000'})
+        
+        self.rotate_keys = ['w', 'e', 'r']
+        for key in self.rotate_keys:
+            root.bind (key, self.key_press)
 
         canv.pack(expand=1, fill=tkinter.BOTH)
+        # /Canvas
 
         root.update_idletasks()
 
         root.mainloop()
+
+    def key_press(self, event):
+        if event.char in self.rotate_keys:
+            self.geom_canv.rotate(event.char)
 
     def close_window(self, event):
         try:

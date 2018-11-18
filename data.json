@@ -1,0 +1,39 @@
+{
+  "points": [
+    [150, 200, 0],
+    [150, 200, 250],
+    [0, 0, 0],
+    [100, 0, 0],
+    [0, 100, 0],
+    [0, 0, 100]
+  ],
+  "lines": [
+    {
+      "coords": [2, 3],
+      "options": {
+        "width": 5,
+        "tag": "line",
+        "activefill": "#ffcf00",
+        "fill": "#ff0000"
+      }
+    },
+    {
+      "coords": [2, 4],
+      "options": {
+        "width": 5,
+        "tag": "line",
+        "activefill": "#ffcf00",
+        "fill": "#00ff00"
+      }
+    },
+    {
+      "coords": [2, 5],
+      "options": {
+        "width": 5,
+        "tag": "line",
+        "activefill": "#ffcf00",
+        "fill": "#0000ff"
+      }
+    }
+  ]
+}
