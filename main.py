@@ -59,14 +59,15 @@ class Geom_Canvas():
         return fig
 
     def rotate(self, key):
-        # print "rotated"
         import math
-        if key=='w':
-            self.g.rotate(1,2,math.pi/12)
+        angle = math.pi/36
+        # print "rotated"
+        if   key == 'w':
+            self.g.rotate(1, 2, angle)
         elif key == 'e':
-            self.g.rotate(0,2,math.pi/12)
+            self.g.rotate(0, 2, angle)
         elif key == 'r':
-            self.g.rotate (0, 1, math.pi / 12)
+            self.g.rotate(0, 1, angle)
         self.proj1.update(vec_rot_point3=self.tZ)
         for fig in zip(self.figures,self.proj1.geom2.figures3):
             coords = fig[1].points3[0].coords3 + fig[1].points3[1].coords3

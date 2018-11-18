@@ -34,6 +34,33 @@
         "activefill": "#ffcf00",
         "fill": "#0000ff"
       }
+    },
+    {
+      "coords": [3, 4],
+      "options": {
+        "width": 5,
+        "tag": "line",
+        "activefill": "#ffcf00",
+        "fill": "#ffff00"
+      }
+    },
+    {
+      "coords": [4, 5],
+      "options": {
+        "width": 5,
+        "tag": "line",
+        "activefill": "#ffcf00",
+        "fill": "#00ffff"
+      }
+    },
+    {
+      "coords": [5, 3],
+      "options": {
+        "width": 5,
+        "tag": "line",
+        "activefill": "#ffcf00",
+        "fill": "#ff00ff"
+      }
     }
   ]
 }

@@ -260,6 +260,18 @@ class Geom3(Shape3):
                                              num_in_points_arr(p)] for
                                 p in f.points3]))
 
+    def _matmult(self, m1, m2, func=lambda x, y: x * y):
+            '''
+            print 'a = '+str(m1)
+            print 'b = '+str(m2)
+            '''
+            zip_b = zip(*m2)
+            # uncomment next line if python 3 :
+            # zip_b = list(zip_b)
+            return [[sum(func(ele_a, ele_b) for ele_a, ele_b in
+                         zip(row_a, col_b))
+                     for col_b in zip_b] for row_a in m1]
+
     # Rotate points in plane by normal_vec1 & normal_vec2 by angle clockwise
     def rotate(self, nv1, nv2, ang):
         from math import sin, cos
@@ -275,16 +287,13 @@ class Geom3(Shape3):
 
         mat_rot = [[lam(ang) for lam in st] for st in l_mat_rot]
 
-        def matmult(a, b, func=lambda x, y: x * y):
-            zip_b = zip(*b)
-            # uncomment next line if python 3 :
-            # zip_b = list(zip_b)
-            return [[sum(func(ele_a, ele_b) for ele_a, ele_b in
-                         zip(row_a, col_b))
-                     for col_b in zip_b] for row_a in a]
-
         for p in self.points3:
-            p.coords3 = matmult([p.coords3], mat_rot)[0]
+            '''
+            print 'a ='+str([p.coords3])
+            print 'b ='+str(mat_rot)
+            '''
+            # print self.matmult([p.coords3], mat_rot)
+            p.coords3 = self._matmult([p.coords3], mat_rot)[0]
 
 
 class Proj2(Geom3):
@@ -355,7 +364,7 @@ class Proj2(Geom3):
         Xxy = self.vec_rot_point3['x']
         Yxy = self.vec_rot_point3['y']
         a2 = phase(complex(Xxy, Yxy))
-        self.geom_source3.rotate(0, 1, -a2)
+        self.geom_source3.rotate(0, 1, a2)
 
         # Rotation: vec_point['y'] -> 0
         Yyz = self.vec_point3['y']
